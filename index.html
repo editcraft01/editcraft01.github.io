@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>EditCraft</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0f0f0f;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 25px rgba(255,255,255,0.05);
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 18px;
+      color: #bbbbbb;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #dddddd;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 12px 26px;
+      background: #ffffff;
+      color: #000000;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1 id="title">Loading...</h1>
+    <h2 id="subtitle"></h2>
+    <p id="about"></p>
+
+    <a href="https://www.instagram.com/ed1tcraft" target="_blank">
+      Visit Instagram
+    </a>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxYNaPLZcV_kQbMgf32MjIxdKrJLjDKxY",
+      authDomain: "editcraft-353dd.firebaseapp.com",
+      projectId: "editcraft-353dd",
+      storageBucket: "editcraft-353dd.firebasestorage.app",
+      messagingSenderId: "188093539489",
+      appId: "1:188093539489:web:d1e58f0bd5da4b979abce0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    db.collection("content").doc("homepage").get()
+      .then((doc) => {
+        if (doc.exists) {
+          const d = doc.data();
+          document.getElementById("title").innerText = d.title;
+          document.getElementById("subtitle").innerText = d.subtitle;
+          document.getElementById("about").innerText = d.about;
+        }
+      });
+  </script>
+
+</body>
+</html>
