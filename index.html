@@ -1,191 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>EditCraft</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>EditCraft</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-:root{
-  --bg:#0d0d0d;
-  --card:#1b1b1b;
-  --text:#ffffff;
-  --sub:#bbbbbb;
-  --btn:#ffffff;
-  --btnText:#000000;
-}
-body.light{
-  --bg:#f4f4f4;
-  --card:#ffffff;
-  --text:#000000;
-  --sub:#444;
-  --btn:#000000;
-  --btnText:#ffffff;
-}
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  transition:0.3s;
-}
-.card{
-  background:var(--card);
-  padding:26px;
-  border-radius:16px;
-  max-width:420px;
-  width:100%;
-  text-align:center;
-  box-shadow:0 20px 40px rgba(0,0,0,0.4);
-  animation:fade 0.8s ease;
-}
-@keyframes fade{
-  from{opacity:0;transform:translateY(20px)}
-  to{opacity:1;transform:translateY(0)}
-}
-button{
-  width:100%;
-  margin-top:12px;
-  padding:12px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  background:var(--btn);
-  color:var(--btnText);
-}
-.logout{background:#ff4d4d;color:#fff}
-iframe{
-  width:100%;
-  height:600px;
-  border:none;
-  margin-top:20px;
-  border-radius:12px;
-  display:none;
-}
-img{
-  border-radius:50%;
-  margin-top:10px;
-}
-.toggle{
-  font-size:14px;
-  margin-top:12px;
-  cursor:pointer;
-  opacity:0.7;
-}
-.note{
-  font-size:12px;
-  opacity:0.6;
-  margin-top:8px;
-}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #1c1c1c;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .login {
+      background: #4285F4;
+      color: #fff;
+    }
+
+    .logout {
+      background: #ff4d4d;
+      color: #fff;
+    }
+
+    iframe {
+      margin-top: 20px;
+      width: 100%;
+      height: 500px;
+      border: none;
+      display: none;
+    }
+
+    img {
+      border-radius: 50%;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="card">
+    <h1>EditCraft</h1>
+    <p>Create. Edit. Inspire.</p>
 
-<div class="card">
-  <h1>EditCraft</h1>
-  <p class="note">Create • Edit • Inspire</p>
+    <button id="loginBtn" class="login">Sign in with Google</button>
+    <button id="logoutBtn" class="logout" style="display:none;">Logout</button>
 
-  <!-- USER INFO -->
-  <div id="userBox" style="display:none;">
-    <img id="photo" width="80">
-    <p id="name"></p>
-    <button class="logout" onclick="logout()">Logout</button>
+    <div id="userInfo"></div>
+
+    <iframe
+      id="formFrame"
+      src="https://docs.google.com/forms/d/e/XXXXXXXXXXXX/viewform?embedded=true">
+    </iframe>
+
+    <br><br>
+    <a href="https://www.instagram.com/editcraft" target="_blank" style="color:#fff;">
+      Visit Instagram
+    </a>
   </div>
 
-  <!-- LOGIN -->
-  <button id="loginBtn" onclick="login()">Sign in with Google</button>
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <!-- FORM -->
-  <iframe id="form"
-    src="https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?embedded=true">
-  </iframe>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxYNaPLZcV_kQbMgf32MjIxdKrJLjDKxY",
+      authDomain: "editcraft-353dd.firebaseapp.com",
+      projectId: "editcraft-353dd",
+      appId: "1:188093539489:web:d1e58f0bd5da4b979abce0"
+    };
 
-  <!-- INSTAGRAM -->
-  <a id="insta" href="https://www.instagram.com/ed1tcraft" target="_blank" style="display:none;">
-    <button style="background:#E1306C;color:#fff">Visit Instagram</button>
-  </a>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
-  <p class="note">Your details are safe. Used only for your order.</p>
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userInfo = document.getElementById("userInfo");
+    const formFrame = document.getElementById("formFrame");
 
-  <div class="toggle" onclick="toggleTheme()">🌙 Toggle Theme</div>
-</div>
+    loginBtn.onclick = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        alert(err.message);
+        console.error(err);
+      }
+    };
 
-<!-- SOUNDS -->
-<audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-click-melodic-tone-1129.mp3"></audio>
-<audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+    };
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "block";
+        formFrame.style.display = "block";
 
-<script>
-/* 🔥 FIREBASE CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyDxYNaPLZcV_kQbMgf32MjIxdKrJLjDKxY",
-  authDomain: "editcraft-353dd.firebaseapp.com",
-  projectId: "editcraft-353dd",
-  storageBucket: "editcraft-353dd.appspot.com",
-  messagingSenderId: "188093539489",
-  appId: "1:188093539489:web:d1e58f0bd5da4b979abce0"
-};
+        userInfo.innerHTML = `
+          <img src="${user.photoURL}" width="80">
+          <p>${user.displayName}</p>
+          <p>${user.email}</p>
+        `;
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+        await addDoc(collection(db, "logins"), {
+          name: user.displayName,
+          email: user.email,
+          time: serverTimestamp()
+        });
 
-/* 🔊 SOUND */
-function clickS(){document.getElementById("clickSound").play();}
-
-/* 🔐 LOGIN */
-function login(){
-  clickS();
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider);
-}
-
-/* 🔄 STATE */
-auth.onAuthStateChanged(user=>{
-  if(user){
-    document.getElementById("successSound").play();
-    loginBtn.style.display="none";
-    userBox.style.display="block";
-    form.style.display="block";
-    insta.style.display="block";
-
-    name.innerText=user.displayName;
-    photo.src=user.photoURL;
-
-    // SAVE / UPDATE LOGIN
-    db.collection("logins").doc(user.uid).set({
-      name:user.displayName,
-      email:user.email,
-      photo:user.photoURL,
-      lastLogin:firebase.firestore.FieldValue.serverTimestamp()
+      } else {
+        loginBtn.style.display = "block";
+        logoutBtn.style.display = "none";
+        formFrame.style.display = "none";
+        userInfo.innerHTML = "";
+      }
     });
-  }
-});
-
-/* 🚪 LOGOUT */
-function logout(){
-  clickS();
-  auth.signOut();
-  location.reload();
-}
-
-/* 🌗 THEME */
-if(localStorage.theme==="light") document.body.classList.add("light");
-function toggleTheme(){
-  document.body.classList.toggle("light");
-  localStorage.theme = document.body.classList.contains("light")?"light":"dark";
-}
-</script>
-
+  </script>
 </body>
 </html>
