@@ -4,81 +4,188 @@
 <meta charset="UTF-8">
 <title>EditCraft</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{margin:0;font-family:Arial;background:#0f0f0f;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
-.card{background:#1c1c1c;padding:25px;border-radius:16px;max-width:420px;width:100%;text-align:center}
-button{width:100%;padding:12px;margin-top:12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
-iframe{width:100%;height:550px;border:none;margin-top:15px;border-radius:10px}
+:root{
+  --bg:#0d0d0d;
+  --card:#1b1b1b;
+  --text:#ffffff;
+  --sub:#bbbbbb;
+  --btn:#ffffff;
+  --btnText:#000000;
+}
+body.light{
+  --bg:#f4f4f4;
+  --card:#ffffff;
+  --text:#000000;
+  --sub:#444;
+  --btn:#000000;
+  --btnText:#ffffff;
+}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition:0.3s;
+}
+.card{
+  background:var(--card);
+  padding:26px;
+  border-radius:16px;
+  max-width:420px;
+  width:100%;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,0.4);
+  animation:fade 0.8s ease;
+}
+@keyframes fade{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+button{
+  width:100%;
+  margin-top:12px;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
+  background:var(--btn);
+  color:var(--btnText);
+}
+.logout{background:#ff4d4d;color:#fff}
+iframe{
+  width:100%;
+  height:600px;
+  border:none;
+  margin-top:20px;
+  border-radius:12px;
+  display:none;
+}
+img{
+  border-radius:50%;
+  margin-top:10px;
+}
+.toggle{
+  font-size:14px;
+  margin-top:12px;
+  cursor:pointer;
+  opacity:0.7;
+}
+.note{
+  font-size:12px;
+  opacity:0.6;
+  margin-top:8px;
+}
 </style>
 </head>
+
 <body>
 
 <div class="card">
   <h1>EditCraft</h1>
-  <p>Login to continue</p>
+  <p class="note">Create • Edit • Inspire</p>
 
-  <button id="loginBtn">Sign in with Google</button>
-
-  <div id="userArea" style="display:none;">
-    <p id="userName"></p>
-    <iframe src="https://docs.google.com/forms/d/e/XXXXXXXX/viewform?embedded=true"></iframe>
-    <button onclick="logout()">Logout</button>
+  <!-- USER INFO -->
+  <div id="userBox" style="display:none;">
+    <img id="photo" width="80">
+    <p id="name"></p>
+    <button class="logout" onclick="logout()">Logout</button>
   </div>
+
+  <!-- LOGIN -->
+  <button id="loginBtn" onclick="login()">Sign in with Google</button>
+
+  <!-- FORM -->
+  <iframe id="form"
+    src="https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?embedded=true">
+  </iframe>
+
+  <!-- INSTAGRAM -->
+  <a id="insta" href="https://www.instagram.com/ed1tcraft" target="_blank" style="display:none;">
+    <button style="background:#E1306C;color:#fff">Visit Instagram</button>
+  </a>
+
+  <p class="note">Your details are safe. Used only for your order.</p>
+
+  <div class="toggle" onclick="toggleTheme()">🌙 Toggle Theme</div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- SOUNDS -->
+<audio id="clickSound" src="https://assets.mixkit.co/sfx/preview/mixkit-click-melodic-tone-1129.mp3"></audio>
+<audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+
+<script>
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
-  apiKey:"YOUR_API_KEY",
-  authDomain:"editcraft-353dd.firebaseapp.com",
-  projectId:"editcraft-353dd",
-  appId:"1:188093539489:web:d1e58f0bd5da4b979abce0"
+  apiKey: "AIzaSyDxYNaPLZcV_kQbMgf32MjIxdKrJLjDKxY",
+  authDomain: "editcraft-353dd.firebaseapp.com",
+  projectId: "editcraft-353dd",
+  storageBucket: "editcraft-353dd.appspot.com",
+  messagingSenderId: "188093539489",
+  appId: "1:188093539489:web:d1e58f0bd5da4b979abce0"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const loginBtn = document.getElementById("loginBtn");
-const userArea = document.getElementById("userArea");
+/* 🔊 SOUND */
+function clickS(){document.getElementById("clickSound").play();}
 
-loginBtn.onclick = async () => {
-  const res = await signInWithPopup(auth, provider);
-  const u = res.user;
+/* 🔐 LOGIN */
+function login(){
+  clickS();
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider);
+}
 
-  // 🔒 BLOCK MULTIPLE LOGINS (1 per day)
-  const today = new Date().toISOString().slice(0,10);
-  const q = query(
-    collection(db,"logins"),
-    where("email","==",u.email),
-    where("date","==",today)
-  );
-  const snap = await getDocs(q);
-  if(!snap.empty){
-    alert("You already logged in today");
-    return;
+/* 🔄 STATE */
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById("successSound").play();
+    loginBtn.style.display="none";
+    userBox.style.display="block";
+    form.style.display="block";
+    insta.style.display="block";
+
+    name.innerText=user.displayName;
+    photo.src=user.photoURL;
+
+    // SAVE / UPDATE LOGIN
+    db.collection("logins").doc(user.uid).set({
+      name:user.displayName,
+      email:user.email,
+      photo:user.photoURL,
+      lastLogin:firebase.firestore.FieldValue.serverTimestamp()
+    });
   }
+});
 
-  await addDoc(collection(db,"logins"),{
-    name:u.displayName,
-    email:u.email,
-    date:today,
-    time:serverTimestamp()
-  });
-
-  userArea.style.display="block";
-  loginBtn.style.display="none";
-  userName.innerText = "Welcome " + u.displayName;
-};
-
-window.logout = () => {
-  signOut(auth);
+/* 🚪 LOGOUT */
+function logout(){
+  clickS();
+  auth.signOut();
   location.reload();
-};
+}
+
+/* 🌗 THEME */
+if(localStorage.theme==="light") document.body.classList.add("light");
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  localStorage.theme = document.body.classList.contains("light")?"light":"dark";
+}
 </script>
+
 </body>
 </html>
