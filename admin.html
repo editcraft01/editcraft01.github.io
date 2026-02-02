@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EditCraft – Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#0f0f0f;
+  color:#ffffff;
+  padding:20px;
+}
+h2{
+  margin-top:0;
+}
+button{
+  padding:10px 16px;
+  margin-right:10px;
+  margin-top:10px;
+  font-weight:bold;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+  font-size:13px;
+}
+th, td{
+  border:1px solid #444;
+  padding:8px;
+  text-align:left;
+}
+th{
+  background:#1c1c1c;
+}
+</style>
+</head>
+
+<body>
+
+<h2>EditCraft – Admin Dashboard</h2>
+
+<button id="adminLoginBtn">Admin Login (Google)</button>
+<button onclick="exportCSV()">Export to Excel</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Date</th>
+      <th>Time</th>
+    </tr>
+  </thead>
+  <tbody id="loginTable"></tbody>
+</table>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔐 ADMIN EMAIL (OWNER) */
+const ADMIN_EMAIL = "harshvardhan.more@ngivbt.edu.in";
+
+/* 🔥 FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "editcraft-353dd.firebaseapp.com",
+  projectId: "editcraft-353dd",
+  appId: "1:188093539489:web:d1e58f0bd5da4b979abce0"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+const loginBtn = document.getElementById("adminLoginBtn");
+const tableBody = document.getElementById("loginTable");
+
+/* 🔑 ADMIN LOGIN */
+loginBtn.onclick = async () => {
+  try{
+    const res = await signInWithPopup(auth, provider);
+    const user = res.user;
+
+    if(user.email !== ADMIN_EMAIL){
+      alert("Access denied. You are not admin.");
+      return;
+    }
+
+    loginBtn.style.display = "none";
+    loadLoginData();
+
+  } catch(err){
+    alert("Login failed");
+    console.error(err);
+  }
+};
+
+/* 📊 LOAD LOGIN DATA */
+async function loadLoginData(){
+  const snap = await getDocs(collection(db, "logins"));
+  tableBody.innerHTML = "";
+
+  snap.forEach(doc => {
+    const d = doc.data();
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${d.name || ""}</td>
+      <td>${d.email || ""}</td>
+      <td>${d.date || ""}</td>
+      <td>${d.time ? d.time.toDate().toLocaleString() : ""}</td>
+    `;
+
+    tableBody.appendChild(tr);
+  });
+}
+
+/* 📥 EXPORT TO EXCEL (CSV) */
+window.exportCSV = () => {
+  let csv = "Name,Email,Date,Time\n";
+  document.querySelectorAll("#loginTable tr").forEach(row => {
+    csv += [...row.children].map(td => td.innerText).join(",") + "\n";
+  });
+
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  a.download = "editcraft-login-records.csv";
+  a.click();
+};
+</script>
+
+</body>
+</html>
